@@ -1,0 +1,321 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Product Management System
+  description: Basic system validation
+schemes:
+  - http
+host: localhost:5000
+basePath: /
+
+tags:
+  - name: "Product"
+    description: "APIs on products"
+  - name: "Category"
+    description: "APIs on categories"
+
+paths:
+  /products/get/{prod_id}:
+    get:
+      tags: 
+        - Product
+      summary: "Get a product object by its ID"
+      parameters:
+        - name: prod_id
+          type: number
+          format: int64
+          minimum: 1
+          in: path
+          required: true
+          description: The ID of the product
+      produces: 
+        - application/json
+      responses:
+        '200':
+          description: Getting a product object of the given id
+          schema:
+            $ref: '#/definitions/ResponseProduct'
+        '400':
+          description: The specified product ID is invalid (NaN).
+        '404':
+          description: The specified product ID is not found
+  
+  /products/post:
+    post:
+      tags:
+        - Product
+      summary: "Add a new product to the list"
+      consumes:
+        - "application/json"
+      parameters:
+        - name: product
+          in: body
+          description: Product JSON object
+          required: true
+          schema:
+            $ref: "#/definitions/RequestProduct"
+
+      responses:
+        '200':
+          description: Succesfully added the product
+          schema:
+            type: object
+            properties:
+              success: 
+                type: boolean
+                description: Result of operation
+              id: 
+                type: number
+                description: ID of the created product
+              url:
+                type: string
+                format: url-reference
+                description: URI path of the newly created product
+        '400':
+          description: The add request does not meet the requirements
+          schema:
+            type: object
+            properties:
+              success: 
+                type: boolean
+                description: Result of operation
+              message: 
+                type: string
+              
+  /products/delete/{prod_id}:
+    delete:
+      tags:
+        - Product
+      summary: "To delete a product of given id"
+      parameters:
+        - name: prod_id
+          type: string
+          in: path
+          description: The id of the product to be changed
+          required: true 
+      responses:
+        '200':
+          description: Succesfully deleted the product
+          schema:
+            type: string
+        '404':
+          description: Product not found. Invalid ID
+          schema:
+            type: string
+
+  /categories/get/{cat_id}:
+    get:
+      tags: 
+        - Category
+      summary: "Get a category object by its ID"
+      parameters:
+        - name: cat_id
+          type: number
+          format: int64
+          minimum: 1
+          in: path
+          required: true
+          description: The ID of the category
+      produces: 
+        - application/json
+      responses:
+        '200':
+          description: Getting a category object of the given id
+          schema:
+            $ref: '#/definitions/ResponseCategory'
+        '400':
+          description: The specified product ID is invalid (NaN).
+        '404':
+          description: The specified product ID is not found
+  
+  /categories/post:
+    post:
+      tags:
+        - Category
+      summary: "Add a new category to the list"
+      consumes:
+        - "application/json"
+      parameters:
+        - name: category
+          in: body
+          description: Category JSON object
+          required: true
+          schema:
+            $ref: "#/definitions/RequestCategory"
+
+      responses:
+        '200':
+          description: Succesfully added the category
+          schema:
+            type: object
+            properties:
+              success: 
+                type: boolean
+                description: Result of operation
+              id: 
+                type: number
+                description: ID of the created category
+              url:
+                type: string
+                format: url-reference
+                description: URI path of the newly created category
+        '400':
+          description: The add request does not meet the requirements
+          schema:
+            type: object
+            properties:
+              success: 
+                type: boolean
+                description: Result of operation
+              message: 
+                type: string
+
+  /categories/delete/{cat_id}:
+    delete:
+      tags:
+        - Category
+      summary: To delete a category of given id
+      parameters:
+        - name: cat_id
+          type: string
+          in: path
+          description: The id of the category to be changed
+          required: true 
+      responses:
+        '200':
+          description: Succesfully deleted the category along with the products of that category
+          schema:
+            type: object
+            properties:
+              message: 
+                type: string
+              product_ids: 
+                type: array
+                items:
+                  type: integer
+        '404':
+          description: Category not found. Invalid ID
+          schema:
+            type: string
+
+
+
+definitions:
+  Product:
+    type: object
+    properties:
+      pid:
+        type: number
+        format: int64
+        minimum: 1
+      name:
+        type: string
+      brand: 
+        type: string
+      price:
+        type: number
+        format: float64
+        minimum: 0
+      category_id:
+        type: number
+        format: int64
+        minimum: 1
+      addn_data:
+        type: object
+        description: The additional properties of object like live_status, color, size etc.
+
+  RequestProduct:
+    type: object
+    allOf:
+      - $ref: "#/definitions/Product"
+    required:
+      - name
+      - brand
+      - price
+      - category_id
+      - addn_data
+  
+  ResponseProduct:
+    type: object
+    allOf:
+      - $ref: "#/definitions/Product"
+      - $ref: "#/definitions/Links"
+    required:
+      - pid
+      - name
+      - brand
+      - category_id
+      - addn_data
+  
+  Category:
+    type: object
+    properties:
+      cid: 
+        type: number
+        format: int64
+        minimum: 1
+      name:
+        type: string
+      parent_category_id:
+        type: number
+        format: int64
+        minimum: 0
+        description: The ID of the parent of this category, 0 if no parent exists.
+      child_category_ids:
+        type: array
+        items:
+          type: number
+        description: The IDs of the child categories to this category
+      tax_rate:
+        type: number
+        format: float64
+        description: Tax rate on the products of this category (Between 0 and 100%)
+        maximum: 100
+        minimum: 0
+      products:
+        type: array
+        items:
+          type: number
+        description: All the IDs of the products instantiated using the category
+
+  RequestCategory:
+    type: object
+    allOf:
+      - $ref: "#/definitions/Category"
+    required:
+      - name
+      - parent_category_id
+      - tax_rate
+  
+  ResponseCategory:
+    type: object
+    allOf:
+      - $ref: "#/definitions/Category"
+      - $ref: "#/definitions/Links"
+    required:
+      - cid
+      - name
+      - parent_category_id
+      - child_category_ids
+      - tax_rate
+      - products
+  
+  Links:
+    type: object
+    properties:
+      links:
+        type: array
+        items:
+          type: object
+          properties:
+            rel:
+              type: string
+            href:
+              type: string
+              format: url-reference
+            method:
+              type: string
+              enum:
+                - GET
+                - POST
+                - DELETE
